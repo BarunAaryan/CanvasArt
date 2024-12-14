@@ -5,42 +5,20 @@ export default function ImageInpaintingWidget() {
   const [maskImage, setMaskImage] = useState(null);
   const [brushSize, setBrushSize] = useState(10);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [scale, setScale] = useState(1);
   const canvasRef = useRef(null);
   const maskCanvasRef = useRef(null);
   const ctxRef = useRef(null);
   const maskCtxRef = useRef(null);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const maskCanvas = maskCanvasRef.current;
-    if (canvas && maskCanvas) {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      maskCanvas.width = canvas.width;
-      maskCanvas.height = canvas.height;
-      
-      const ctx = canvas.getContext('2d');
-      const maskCtx = maskCanvas.getContext('2d');
-      
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.lineWidth = brushSize;
-      
-      maskCtx.lineCap = 'round';
-      maskCtx.strokeStyle = 'white';
-      maskCtx.lineWidth = brushSize;
-      
-      ctxRef.current = ctx;
-      maskCtxRef.current = maskCtx;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (ctxRef.current && maskCtxRef.current) {
-      ctxRef.current.lineWidth = brushSize;
-      maskCtxRef.current.lineWidth = brushSize;
-    }
-  }, [brushSize]);
+  const calculateScale = (imgWidth, imgHeight) => {
+    const maxWidth = Math.min(800, window.innerWidth - 40); // 40px for padding
+    const maxHeight = 600; // Maximum height we want to allow
+    
+    const scaleX = maxWidth / imgWidth;
+    const scaleY = maxHeight / imgHeight;
+    return Math.min(scaleX, scaleY);
+  };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -49,21 +27,31 @@ export default function ImageInpaintingWidget() {
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
+          const newScale = calculateScale(img.width, img.height);
+          setScale(newScale);
+
           const canvas = canvasRef.current;
           const maskCanvas = maskCanvasRef.current;
-          canvas.width = img.width;
-          canvas.height = img.height;
-          maskCanvas.width = img.width;
-          maskCanvas.height = img.height;
+          
+          // Set scaled dimensions
+          const scaledWidth = img.width * newScale;
+          const scaledHeight = img.height * newScale;
+          
+          canvas.width = scaledWidth;
+          canvas.height = scaledHeight;
+          maskCanvas.width = scaledWidth;
+          maskCanvas.height = scaledHeight;
           
           const ctx = canvas.getContext('2d');
           const maskCtx = maskCanvas.getContext('2d');
           
-          ctx.drawImage(img, 0, 0);
-          maskCtx.drawImage(img, 0, 0);
+          // Draw scaled image
+          ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
+          maskCtx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
           
           setImage(img);
           
+          // Set drawing styles
           ctx.lineCap = 'round';
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
           ctx.lineWidth = brushSize;
@@ -81,33 +69,30 @@ export default function ImageInpaintingWidget() {
     }
   };
 
-  const startDrawing = ({ nativeEvent }) => {
+  const getCoordinates = (event) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (nativeEvent.clientX - rect.left) * scaleX;
-    const y = (nativeEvent.clientY - rect.top) * scaleY;
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+  };
 
+  const startDrawing = (event) => {
+    const coords = getCoordinates(event);
     ctxRef.current.beginPath();
-    ctxRef.current.moveTo(x, y);
+    ctxRef.current.moveTo(coords.x, coords.y);
     maskCtxRef.current.beginPath();
-    maskCtxRef.current.moveTo(x, y);
+    maskCtxRef.current.moveTo(coords.x, coords.y);
     setIsDrawing(true);
   };
 
-  const draw = ({ nativeEvent }) => {
+  const draw = (event) => {
     if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (nativeEvent.clientX - rect.left) * scaleX;
-    const y = (nativeEvent.clientY - rect.top) * scaleY;
-
-    ctxRef.current.lineTo(x, y);
+    const coords = getCoordinates(event);
+    ctxRef.current.lineTo(coords.x, coords.y);
     ctxRef.current.stroke();
-    maskCtxRef.current.lineTo(x, y);
+    maskCtxRef.current.lineTo(coords.x, coords.y);
     maskCtxRef.current.stroke();
   };
 
@@ -123,18 +108,21 @@ export default function ImageInpaintingWidget() {
   };
 
   const handleClear = () => {
+    if (!image) return;
+
     const canvas = canvasRef.current;
     const maskCanvas = maskCanvasRef.current;
     const ctx = canvas.getContext('2d');
     const maskCtx = maskCanvas.getContext('2d');
     
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+    const scaledWidth = canvas.width;
+    const scaledHeight = canvas.height;
     
-    if (image) {
-      ctx.drawImage(image, 0, 0);
-      maskCtx.drawImage(image, 0, 0);
-    }
+    ctx.clearRect(0, 0, scaledWidth, scaledHeight);
+    maskCtx.clearRect(0, 0, scaledWidth, scaledHeight);
+    
+    ctx.drawImage(image, 0, 0, scaledWidth, scaledHeight);
+    maskCtx.drawImage(image, 0, 0, scaledWidth, scaledHeight);
     
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
@@ -145,8 +133,15 @@ export default function ImageInpaintingWidget() {
     maskCtx.lineWidth = brushSize;
   };
 
+  useEffect(() => {
+    if (ctxRef.current && maskCtxRef.current) {
+      ctxRef.current.lineWidth = brushSize;
+      maskCtxRef.current.lineWidth = brushSize;
+    }
+  }, [brushSize]);
+
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">Image Inpainting Widget</h1>
       <div className="mb-4">
         <input
@@ -163,7 +158,8 @@ export default function ImageInpaintingWidget() {
           onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
-          className="border border-gray-300 w-full h-auto object-contain bg-gray-100"
+          className="border border-gray-300 bg-gray-100"
+          style={{ maxWidth: '100%', height: 'auto' }}
         />
         <canvas
           ref={maskCanvasRef}
@@ -207,11 +203,21 @@ export default function ImageInpaintingWidget() {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <h2 className="text-xl font-semibold mb-2">Original Image</h2>
-            <img src={image.src} alt="Original" className="max-w-full h-auto border border-gray-300" />
+            <img 
+              src={image.src} 
+              alt="Original" 
+              className="max-w-full h-auto border border-gray-300" 
+              style={{ maxHeight: '300px', width: 'auto' }}
+            />
           </div>
           <div>
             <h2 className="text-xl font-semibold mb-2">Mask Image</h2>
-            <img src={maskImage} alt="Mask" className="max-w-full h-auto border border-gray-300" />
+            <img 
+              src={maskImage} 
+              alt="Mask" 
+              className="max-w-full h-auto border border-gray-300"
+              style={{ maxHeight: '300px', width: 'auto' }}
+            />
           </div>
         </div>
       )}
