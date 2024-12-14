@@ -1,15 +1,13 @@
-
-import './App.css'
-import ImageInpaintingWidget from './components/ImageDisplay'
+import React from 'react'
+import ImageInpaintingWidget from './components/ImageInpaintingWidget'
 
 function App() {
-  
-
   return (
-    <>
-       <ImageInpaintingWidget />
-    </>
+    <div className="min-h-screen bg-gray-100">
+      <ImageInpaintingWidget />
+    </div>
   )
 }
 
 export default App
+
