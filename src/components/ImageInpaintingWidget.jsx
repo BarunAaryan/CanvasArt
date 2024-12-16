@@ -24,17 +24,13 @@ export default function ImageInpaintingWidget() {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-    <div className="flex items-center space-x-4 bg-yellow-200 rounded-lg ">
-    <img src="src\public\Canvas.png" className='w-16 h-16 object-cover' alt="" />
-    <h1 className=" mt-2 text-3xl font-bold mb-4">Canvas - Your Image Painting Widget</h1>
-    </div>
-      
-      <div className="mb-8 mt-8">
+      <h1 className="text-3xl font-bold mb-4">Image Inpainting Widget</h1>
+      <div className="mb-4">
         <input
           type="file"
           accept="image/jpeg, image/png"
           onChange={(e) => handleImageUpload(e.target.files[0])}
-          className="mb-4 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          className="mb-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
         />
       </div>
       <div className="mb-4 relative">
