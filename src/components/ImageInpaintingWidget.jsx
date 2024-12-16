@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCanvas } from '../hooks/useCanvas';
 import { BrushSizeControl } from './BrushSizeControl';
 import { ActionButtons } from './ActionButtons';
+import CanvasImage from "../public/Canvas.png";
 
 export default function ImageInpaintingWidget() {
   const [brushSize, setBrushSize] = useState(10);
@@ -25,7 +26,7 @@ export default function ImageInpaintingWidget() {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <div className='flex bg-yellow-300 rounded-lg '>
-      <img className='w-10 h-10 mt-1' src="src\public\Canvas.png" alt="" />
+      <img className='w-10 h-10 mt-1' src={CanvasImage} alt="" />
       <h1 className="text-3xl font-bold mb-4 mt-2">Canvas - Your Image Painting Canvas</h1>
       </div>
     
