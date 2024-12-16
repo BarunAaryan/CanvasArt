@@ -24,8 +24,12 @@ export default function ImageInpaintingWidget() {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">Image Inpainting Widget</h1>
-      <div className="mb-4">
+      <div className='flex bg-yellow-300 rounded-lg '>
+      <img className='w-10 h-10 mt-1' src="src\public\Canvas.png" alt="" />
+      <h1 className="text-3xl font-bold mb-4 mt-2">Canvas - Your Image Painting Canvas</h1>
+      </div>
+    
+      <div className="mb-4 mt-4">
         <input
           type="file"
           accept="image/jpeg, image/png"
